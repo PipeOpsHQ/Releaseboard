@@ -17,13 +17,13 @@ const updateSchema = z.object({
   token: z.string().optional().nullable()
 });
 
-export async function PATCH(request: Request, context: { params: { id: string } }): Promise<Response> {
+export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }): Promise<Response> {
   const authenticated = await isAdminAuthenticated();
   if (!authenticated) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const params = context.params;
+  const params = await context.params;
   const body = await request.json();
 
   const parsed = updateSchema.safeParse(body);
@@ -42,13 +42,13 @@ export async function PATCH(request: Request, context: { params: { id: string } 
   return NextResponse.json({ source });
 }
 
-export async function DELETE(_: Request, context: { params: { id: string } }): Promise<Response> {
+export async function DELETE(_: Request, context: { params: Promise<{ id: string }> }): Promise<Response> {
   const authenticated = await isAdminAuthenticated();
   if (!authenticated) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const params = context.params;
+  const params = await context.params;
   deleteRepoSource(params.id);
   invalidateChangelogCache();
 

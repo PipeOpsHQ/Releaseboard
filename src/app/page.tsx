@@ -7,7 +7,7 @@ import { getChangelogPageByDomain, getDefaultChangelogPage } from "@/lib/db";
 export const dynamic = "force-dynamic";
 
 export default async function HomePage(): Promise<JSX.Element> {
-  const hostHeader = headers().get("host")?.toLowerCase() ?? "";
+  const hostHeader = (await headers()).get("host")?.toLowerCase() ?? "";
   const host = hostHeader.split(":")[0] || "";
   const domainPage = host ? getChangelogPageByDomain(host) : null;
 
