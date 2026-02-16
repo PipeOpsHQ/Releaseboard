@@ -1,5 +1,6 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 
 const ADMIN_COOKIE = "pipeops_admin_session";
 const ADMIN_PAYLOAD = "admin";
@@ -45,7 +46,7 @@ export async function isAdminAuthenticated(): Promise<boolean> {
 export async function requireAdminOrThrow(): Promise<void> {
   const authenticated = await isAdminAuthenticated();
   if (!authenticated) {
-    throw new Error("Unauthorized");
+    redirect("/admin");
   }
 }
 
