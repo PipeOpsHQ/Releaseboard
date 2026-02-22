@@ -21,40 +21,19 @@ interface MonthBucket {
 function getMonthBucket(value: string): MonthBucket {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) {
-    return {
-      key: "unknown",
-      label: "Unknown Month",
-      shortLabel: "Unknown",
-      sortDate: Number.NEGATIVE_INFINITY
-    };
+    return { key: "unknown", label: "Unknown Month", shortLabel: "Unknown", sortDate: Number.NEGATIVE_INFINITY };
   }
-
   const year = date.getUTCFullYear();
   const month = date.getUTCMonth() + 1;
   const key = `${year}-${String(month).padStart(2, "0")}`;
-  const label = new Intl.DateTimeFormat("en-US", {
-    month: "long",
-    year: "numeric",
-    timeZone: "UTC"
-  }).format(date);
-  const shortLabel = new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    timeZone: "UTC"
-  }).format(date);
-
-  return {
-    key,
-    label,
-    shortLabel,
-    sortDate: Date.UTC(year, month - 1, 1)
-  };
+  const label = new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric", timeZone: "UTC" }).format(date);
+  const shortLabel = new Intl.DateTimeFormat("en-US", { month: "short", timeZone: "UTC" }).format(date);
+  return { key, label, shortLabel, sortDate: Date.UTC(year, month - 1, 1) };
 }
 
 function toShortDate(value: string): string {
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return "Unknown date";
-  }
+  if (Number.isNaN(date.getTime())) return "Unknown date";
   return format(date, "MMM dd, yyyy");
 }
 
@@ -64,24 +43,15 @@ function toReleaseAnchor(value: string): string {
 }
 
 function providerLabel(provider: AggregatedRelease["provider"]): string {
-  if (provider === "gitlab") {
-    return "GitLab";
-  }
-
-  if (provider === "bitbucket") {
-    return "Bitbucket";
-  }
-
-  if (provider === "gitea") {
-    return "Gitea";
-  }
-
+  if (provider === "gitlab") return "GitLab";
+  if (provider === "bitbucket") return "Bitbucket";
+  if (provider === "gitea") return "Gitea";
   return "GitHub";
 }
 
 export function ReleaseFeed({ releases, errors, fetchedAt }: ReleaseFeedProps): JSX.Element {
   const services = useMemo(() => {
-    return Array.from(new Set(releases.map((release) => release.sourceName))).sort((a, b) => a.localeCompare(b));
+    return Array.from(new Set(releases.map((r) => r.sourceName))).sort((a, b) => a.localeCompare(b));
   }, [releases]);
 
   const [selectedService, setSelectedService] = useState<string>("all");
@@ -90,75 +60,43 @@ export function ReleaseFeed({ releases, errors, fetchedAt }: ReleaseFeedProps): 
   const [activeReleaseId, setActiveReleaseId] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
-    const lowerQuery = query.trim().toLowerCase();
-
-    return releases.filter((release) => {
-      const serviceMatch = selectedService === "all" || release.sourceName === selectedService;
-      if (!serviceMatch) {
-        return false;
-      }
-
-      if (!lowerQuery) {
-        return true;
-      }
-
-      const combined = `${release.sourceName} ${release.name} ${release.tagName} ${release.bodyExcerpt}`.toLowerCase();
-      return combined.includes(lowerQuery);
+    const lq = query.trim().toLowerCase();
+    return releases.filter((r) => {
+      if (selectedService !== "all" && r.sourceName !== selectedService) return false;
+      if (!lq) return true;
+      return `${r.sourceName} ${r.name} ${r.tagName} ${r.bodyExcerpt}`.toLowerCase().includes(lq);
     });
   }, [releases, query, selectedService]);
 
   const groupedByMonth = useMemo(() => {
     const buckets = new Map<string, MonthBucket & { releases: AggregatedRelease[] }>();
-
-    for (const release of filtered) {
-      const { key, label, shortLabel, sortDate } = getMonthBucket(release.publishedAt);
-
-      if (!buckets.has(key)) {
-        buckets.set(key, { key, label, shortLabel, sortDate, releases: [] });
-      }
-
-      buckets.get(key)?.releases.push(release);
+    for (const r of filtered) {
+      const { key, label, shortLabel, sortDate } = getMonthBucket(r.publishedAt);
+      if (!buckets.has(key)) buckets.set(key, { key, label, shortLabel, sortDate, releases: [] });
+      buckets.get(key)?.releases.push(r);
     }
-
-    const groups = Array.from(buckets.values())
+    return Array.from(buckets.values())
       .sort((a, b) => b.sortDate - a.sortDate)
-      .map((group) => {
-        const releases = [...group.releases].sort((a, b) => {
-          return new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime();
-        });
-        return {
-          key: group.key,
-          label: group.label,
-          shortLabel: group.shortLabel,
-          releases
-        };
-      });
-
-    return groups;
+      .map((g) => ({
+        key: g.key,
+        label: g.label,
+        shortLabel: g.shortLabel,
+        releases: [...g.releases].sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()),
+      }));
   }, [filtered]);
 
   useEffect(() => {
-    function onEscape(event: KeyboardEvent): void {
-      if (event.key === "Escape") {
-        setSelectedRelease(null);
-      }
+    function onEscape(e: KeyboardEvent): void {
+      if (e.key === "Escape") setSelectedRelease(null);
     }
-
     window.addEventListener("keydown", onEscape);
-    return () => {
-      window.removeEventListener("keydown", onEscape);
-    };
+    return () => window.removeEventListener("keydown", onEscape);
   }, []);
 
   useEffect(() => {
-    const filteredIds = new Set(filtered.map((release) => release.id));
-    if (activeReleaseId && !filteredIds.has(activeReleaseId)) {
-      setActiveReleaseId(null);
-    }
-
-    if (selectedRelease && !filteredIds.has(selectedRelease.id)) {
-      setSelectedRelease(null);
-    }
+    const ids = new Set(filtered.map((r) => r.id));
+    if (activeReleaseId && !ids.has(activeReleaseId)) setActiveReleaseId(null);
+    if (selectedRelease && !ids.has(selectedRelease.id)) setSelectedRelease(null);
   }, [activeReleaseId, filtered, selectedRelease]);
 
   return (
@@ -166,12 +104,33 @@ export function ReleaseFeed({ releases, errors, fetchedAt }: ReleaseFeedProps): 
       <div className="toolbar">
         <label className="search-box" htmlFor="search-input">
           <span>Search updates</span>
-          <input
-            id="search-input"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search by service, version, or release notes"
-          />
+          <div style={{ position: "relative" }}>
+            <input
+              id="search-input"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search by service, version, or release notes…"
+              style={{ paddingRight: "3.5rem" }}
+            />
+            <kbd
+              style={{
+                position: "absolute",
+                right: "0.8rem",
+                top: "50%",
+                transform: "translateY(-50%)",
+                background: "rgba(255,255,255,0.05)",
+                border: "1px solid rgba(255,255,255,0.1)",
+                borderRadius: "6px",
+                padding: "0.2rem 0.5rem",
+                fontSize: "0.75rem",
+                color: "var(--text-secondary)",
+                pointerEvents: "none",
+                fontFamily: "var(--font-mono)"
+              }}
+            >
+              ⌘K
+            </kbd>
+          </div>
         </label>
 
         <div className="service-pills">
@@ -182,39 +141,38 @@ export function ReleaseFeed({ releases, errors, fetchedAt }: ReleaseFeedProps): 
           >
             All Services
           </button>
-          {services.map((service) => {
-            return (
-              <button
-                key={service}
-                type="button"
-                className={clsx("pill", selectedService === service && "active")}
-                onClick={() => setSelectedService(service)}
-              >
-                {service}
-              </button>
-            );
-          })}
+          {services.map((s) => (
+            <button
+              key={s}
+              type="button"
+              className={clsx("pill", selectedService === s && "active")}
+              onClick={() => setSelectedService(s)}
+            >
+              {s}
+            </button>
+          ))}
         </div>
       </div>
 
       {errors.length > 0 ? (
         <div className="error-panel" role="status" aria-live="polite">
-          <h3>Some sources failed to sync</h3>
-          <ul>
-            {errors.map((error) => {
-              return (
-                <li key={`${error.sourceId}:${error.message}`}>
-                  <strong>{error.sourceName}</strong> ({error.repository}): {error.message}
+          <div>
+            <h3>⚠ Some sources failed to sync</h3>
+            <ul>
+              {errors.map((err) => (
+                <li key={`${err.sourceId}:${err.message}`}>
+                  <strong>{err.sourceName}</strong> ({err.repository}): {err.message}
                 </li>
-              );
-            })}
-          </ul>
+              ))}
+            </ul>
+          </div>
         </div>
       ) : null}
 
       <div className="meta-line">
         <span>
-          {filtered.length} releases in {groupedByMonth.length} month{groupedByMonth.length === 1 ? "" : "s"}
+          {filtered.length} release{filtered.length !== 1 ? "s" : ""} in {groupedByMonth.length} month
+          {groupedByMonth.length === 1 ? "" : "s"}
         </span>
         <span>Last fetched: {toShortDate(fetchedAt)}</span>
       </div>
@@ -224,136 +182,144 @@ export function ReleaseFeed({ releases, errors, fetchedAt }: ReleaseFeedProps): 
       ) : (
         <div className="timeline-layout">
           <aside className="timeline-sidebar" aria-label="Timeline navigation">
-            {groupedByMonth.map((monthGroup) => {
-              return (
-                <section key={`sidebar-${monthGroup.key}`} className="timeline-sidebar-group">
-                  <a href={`#month-${monthGroup.key}`} className="timeline-sidebar-month">
-                    <span>{monthGroup.shortLabel}</span>
-                  </a>
-
-                  <ul className="timeline-sidebar-list">
-                    {monthGroup.releases.map((release) => {
-                      const releaseAnchor = toReleaseAnchor(release.id);
-                      return (
-                        <li key={`sidebar-${release.id}`}>
-                          <a
-                            href={`#${releaseAnchor}`}
-                            className={clsx(activeReleaseId === release.id && "active")}
-                            onClick={() => setActiveReleaseId(release.id)}
-                          >
-                            {release.name || release.tagName}
-                          </a>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </section>
-              );
-            })}
+            {groupedByMonth.map((mg) => (
+              <section key={`sidebar-${mg.key}`} className="timeline-sidebar-group">
+                <a href={`#month-${mg.key}`} className="timeline-sidebar-month">
+                  <span>{mg.shortLabel}</span>
+                  <span
+                    style={{
+                      fontSize: "0.68rem",
+                      color: "var(--text-muted)",
+                      marginLeft: "auto",
+                      opacity: 0.7,
+                    }}
+                  >
+                    {mg.releases.length}
+                  </span>
+                </a>
+                <ul className="timeline-sidebar-list">
+                  {mg.releases.map((r) => {
+                    const anchor = toReleaseAnchor(r.id);
+                    return (
+                      <li key={`sidebar-${r.id}`}>
+                        <a
+                          href={`#${anchor}`}
+                          className={clsx(activeReleaseId === r.id && "active")}
+                          onClick={() => setActiveReleaseId(r.id)}
+                        >
+                          {r.name || r.tagName}
+                        </a>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </section>
+            ))}
           </aside>
 
           <div className="release-timeline">
-            {groupedByMonth.map((monthGroup) => {
-              return (
-                <section key={monthGroup.key} id={`month-${monthGroup.key}`} className="month-group">
-                  <header className="month-group-header">
-                    <h3>{monthGroup.label}</h3>
-                    <span>{monthGroup.releases.length} updates</span>
-                  </header>
+            {groupedByMonth.map((mg) => (
+              <section key={mg.key} id={`month-${mg.key}`} className="month-group">
+                <header className="month-group-header">
+                  <h3>{mg.label}</h3>
+                  <span>{mg.releases.length} updates</span>
+                </header>
 
-                  <div className="month-group-items">
-                    {monthGroup.releases.map((release) => {
-                      const releaseAnchor = toReleaseAnchor(release.id);
-                      return (
-                        <article
-                          key={release.id}
-                          id={releaseAnchor}
-                          className={clsx("timeline-item", activeReleaseId === release.id && "selected")}
-                        >
-                          <aside className="timeline-stamp">
-                            <time dateTime={release.publishedAt}>{toShortDate(release.publishedAt)}</time>
-                            <span>{release.sourceName}</span>
-                          </aside>
+                <div className="month-group-items">
+                  {mg.releases.map((r, idx) => {
+                    const anchor = toReleaseAnchor(r.id);
+                    return (
+                      <article
+                        key={r.id}
+                        id={anchor}
+                        className={clsx("timeline-item", activeReleaseId === r.id && "selected")}
+                        style={{ animationDelay: `${Math.min(idx * 40, 300)}ms` }}
+                      >
+                        <aside className="timeline-stamp">
+                          <time dateTime={r.publishedAt}>{toShortDate(r.publishedAt)}</time>
+                          <span>{r.sourceName}</span>
+                        </aside>
 
-                          <div className="timeline-node" aria-hidden="true">
-                            <span className="timeline-dot" />
-                          </div>
+                        <div className="timeline-node" aria-hidden="true">
+                          <span className="timeline-dot" />
+                        </div>
 
-                          <div className="timeline-content">
-                            <article
-                              className="release-card timeline-card clickable-card"
-                              role="button"
-                              tabIndex={0}
-                              aria-label={`View details for ${release.name || release.tagName}`}
-                              onClick={() => {
-                                setActiveReleaseId(release.id);
-                                setSelectedRelease(release);
-                              }}
-                              onKeyDown={(event) => {
-                                if (event.key === "Enter" || event.key === " ") {
-                                  event.preventDefault();
-                                  setActiveReleaseId(release.id);
-                                  setSelectedRelease(release);
-                                }
-                              }}
-                            >
-                              <header className="card-header">
-                                <span className="service-chip">{release.sourceName}</span>
-                                <time dateTime={release.publishedAt}>{toShortDate(release.publishedAt)}</time>
-                              </header>
+                        <div className="timeline-content">
+                          <article
+                            className="release-card timeline-card clickable-card"
+                            role="button"
+                            tabIndex={0}
+                            aria-label={`View details for ${r.name || r.tagName}`}
+                            onClick={() => {
+                              setActiveReleaseId(r.id);
+                              setSelectedRelease(r);
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" || e.key === " ") {
+                                e.preventDefault();
+                                setActiveReleaseId(r.id);
+                                setSelectedRelease(r);
+                              }
+                            }}
+                          >
+                            <header className="card-header">
+                              <span className="service-chip">{r.sourceName}</span>
+                              <time dateTime={r.publishedAt}>{toShortDate(r.publishedAt)}</time>
+                            </header>
 
-                              <h3>{release.name}</h3>
+                            <h3>{r.name}</h3>
 
-                              <div className="version-line">
-                                <span>{release.repository}</span>
-                                <span>{release.tagName}</span>
+                            <div className="version-line">
+                              <span>{r.repository}</span>
+                              <span>{r.tagName}</span>
+                            </div>
+
+                            {r.bodyExcerpt ? (
+                              <p className="release-excerpt">{r.bodyExcerpt}</p>
+                            ) : (
+                              <p className="release-excerpt" style={{ fontStyle: "italic", opacity: 0.7 }}>
+                                No release notes were provided for this version.
+                              </p>
+                            )}
+
+                            <footer className="card-footer">
+                              <div className="flags">
+                                {r.kind === "commit" ? <span className="flag">From commit</span> : null}
+                                {r.prerelease ? <span className="flag">Pre-release</span> : null}
+                                {r.draft ? <span className="flag">Draft</span> : null}
                               </div>
 
-                              {release.bodyExcerpt ? (
-                                <p className="release-excerpt">{release.bodyExcerpt}</p>
-                              ) : (
-                                <p className="release-excerpt">No release notes were provided for this version.</p>
-                              )}
-
-                              <footer className="card-footer">
-                                <div className="flags">
-                                  {release.kind === "commit" ? <span className="flag">From commit</span> : null}
-                                  {release.prerelease ? <span className="flag">Pre-release</span> : null}
-                                  {release.draft ? <span className="flag">Draft</span> : null}
-                                </div>
-
-                                <div className="card-actions">
-                                  <button
-                                    type="button"
-                                    className="mini-btn"
-                                    onClick={(event) => {
-                                      event.stopPropagation();
-                                      setActiveReleaseId(release.id);
-                                      setSelectedRelease(release);
-                                    }}
-                                  >
-                                    View details
-                                  </button>
-                                  <a
-                                    href={release.htmlUrl}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    onClick={(event) => event.stopPropagation()}
-                                    onFocus={() => setActiveReleaseId(release.id)}
-                                  >
-                                    Open on {providerLabel(release.provider)}
-                                  </a>
-                                </div>
-                              </footer>
-                            </article>
-                          </div>
-                        </article>
-                      );
-                    })}
-                  </div>
-                </section>
-              );
-            })}
+                              <div className="card-actions">
+                                <button
+                                  type="button"
+                                  className="mini-btn"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setActiveReleaseId(r.id);
+                                    setSelectedRelease(r);
+                                  }}
+                                >
+                                  View details
+                                </button>
+                                <a
+                                  href={r.htmlUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  onClick={(e) => e.stopPropagation()}
+                                  onFocus={() => setActiveReleaseId(r.id)}
+                                >
+                                  Open on {providerLabel(r.provider)}
+                                </a>
+                              </div>
+                            </footer>
+                          </article>
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              </section>
+            ))}
           </div>
         </div>
       )}
@@ -365,7 +331,7 @@ export function ReleaseFeed({ releases, errors, fetchedAt }: ReleaseFeedProps): 
             role="dialog"
             aria-modal="true"
             aria-labelledby="release-modal-title"
-            onClick={(event) => event.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
           >
             <header className="release-modal-header">
               <div>
@@ -394,7 +360,7 @@ export function ReleaseFeed({ releases, errors, fetchedAt }: ReleaseFeedProps): 
 
             <footer className="release-modal-footer">
               <a href={selectedRelease.htmlUrl} target="_blank" rel="noreferrer">
-                View original update on {providerLabel(selectedRelease.provider)}
+                View original on {providerLabel(selectedRelease.provider)} →
               </a>
             </footer>
           </article>

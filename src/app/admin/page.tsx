@@ -65,8 +65,8 @@ export default async function AdminPage(): Promise<JSX.Element> {
   return (
     <main className="page-shell admin-shell">
       <header className="admin-header admin-hero">
-        <p className="eyebrow">Admin</p>
-        <h1>Releaseboard Control Center</h1>
+        <p className="eyebrow">⬢ Admin</p>
+        <h1 className="gradient-text">Releaseboard Control Center</h1>
         <p className="admin-hero-kicker">Operate every changelog surface from one place.</p>
         <p className="hero-copy">
           Manage multiple changelog pages, set unique paths/domains, and route repository sources into the right public feed.
@@ -97,19 +97,19 @@ export default async function AdminPage(): Promise<JSX.Element> {
         </div>
 
         <div className="admin-kpis" role="list" aria-label="Admin overview">
-          <article className="admin-kpi" role="listitem">
+          <article className="admin-kpi" role="listitem" style={{ animation: "fadeSlideUp 400ms cubic-bezier(0.16, 1, 0.3, 1) both", animationDelay: "100ms" }}>
             <span>Pages</span>
             <strong>{pages.length}</strong>
           </article>
-          <article className="admin-kpi" role="listitem">
+          <article className="admin-kpi" role="listitem" style={{ animation: "fadeSlideUp 400ms cubic-bezier(0.16, 1, 0.3, 1) both", animationDelay: "200ms" }}>
             <span>Sources</span>
             <strong>{sources.length}</strong>
           </article>
-          <article className="admin-kpi" role="listitem">
+          <article className="admin-kpi" role="listitem" style={{ animation: "fadeSlideUp 400ms cubic-bezier(0.16, 1, 0.3, 1) both", animationDelay: "300ms" }}>
             <span>Enabled</span>
             <strong>{enabledSources}</strong>
           </article>
-          <article className="admin-kpi" role="listitem">
+          <article className="admin-kpi" role="listitem" style={{ animation: "fadeSlideUp 400ms cubic-bezier(0.16, 1, 0.3, 1) both", animationDelay: "400ms" }}>
             <span>Private</span>
             <strong>{privateSources}</strong>
           </article>
@@ -118,12 +118,12 @@ export default async function AdminPage(): Promise<JSX.Element> {
 
       {!hasPassword ? (
         <section className="admin-card warning-card">
-          <strong>Security warning:</strong> `ADMIN_PASSWORD` is not set. Anyone with access to this app can change repo tokens.
+          <strong>⚠ Security warning:</strong> <code>ADMIN_PASSWORD</code> is not set. Anyone with access to this app can change repo tokens.
         </section>
       ) : null}
 
       <div className="admin-main-grid">
-        <section className="admin-column">
+        <section className="admin-column" style={{ animation: "fadeSlideUp 500ms cubic-bezier(0.16, 1, 0.3, 1) both", animationDelay: "250ms" }}>
           <section className="admin-card admin-section-card">
             <h2>Display Settings</h2>
             <p className="admin-section-note">Choose what visitors see on `/` by default.</p>
@@ -234,7 +234,7 @@ export default async function AdminPage(): Promise<JSX.Element> {
           </section>
         </section>
 
-        <section className="admin-column">
+        <section className="admin-column" style={{ animation: "fadeSlideUp 500ms cubic-bezier(0.16, 1, 0.3, 1) both", animationDelay: "350ms" }}>
           <section className="admin-card admin-section-card">
             <h2>Add Repository Source</h2>
             <p className="admin-section-note">Attach repositories across providers and map each one to a target changelog page.</p>

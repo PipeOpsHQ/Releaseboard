@@ -1,17 +1,17 @@
 import type { Metadata } from "next";
-import { JetBrains_Mono, Manrope, Space_Grotesk } from "next/font/google";
+import { JetBrains_Mono, Inter, Outfit } from "next/font/google";
 import "./globals.css";
 
-const headline = Space_Grotesk({
+const headline = Outfit({
   subsets: ["latin"],
   variable: "--font-headline",
-  weight: ["500", "700"]
+  weight: ["400", "500", "600", "700"]
 });
 
-const body = Manrope({
+const body = Inter({
   subsets: ["latin"],
   variable: "--font-body",
-  weight: ["400", "500", "700"]
+  weight: ["300", "400", "500", "600"]
 });
 
 const mono = JetBrains_Mono({

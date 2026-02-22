@@ -19,17 +19,27 @@ export async function ChangelogView(props?: ChangelogViewProps): Promise<JSX.Ele
 
   return (
     <main className="page-shell">
-      <div className="changelog-topbar">
-        <Link href="/admin" className="primary-btn">
-          Configure Sources
+      <nav className="changelog-topbar" style={{ alignItems: "center" }}>
+        <Link
+          href="/"
+          className="landing-brand"
+          style={{ fontSize: "0.85rem", textDecoration: "none" }}
+        >
+          ⬢ Releaseboard
         </Link>
-        <Link href="/" className="ghost-btn">
-          Home
-        </Link>
-        <a href={apiHref} className="ghost-btn" target="_blank" rel="noreferrer">
-          JSON API
-        </a>
-      </div>
+
+        <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginLeft: "auto" }}>
+          <Link href="/" className="ghost-btn">
+            Home
+          </Link>
+          <Link href="/admin" className="ghost-btn">
+            Admin
+          </Link>
+          <a href={apiHref} className="ghost-btn" target="_blank" rel="noreferrer">
+            JSON API
+          </a>
+        </div>
+      </nav>
 
       {pages.length > 1 ? (
         <div className="service-pills" style={{ marginBottom: "0.8rem" }}>
@@ -47,9 +57,9 @@ export async function ChangelogView(props?: ChangelogViewProps): Promise<JSX.Ele
         </div>
       ) : null}
 
-      <div className="meta-line" style={{ marginBottom: "0.65rem" }}>
-        <span>{pageName}</span>
-        <span>Path: /{pagePathName}</span>
+      <div className="meta-line" style={{ marginBottom: "0.6rem" }}>
+        <span style={{ fontWeight: 600, color: "var(--text-secondary)" }}>{pageName}</span>
+        <span>/{pagePathName}</span>
       </div>
 
       <ReleaseFeed releases={changelog.releases} errors={changelog.errors} fetchedAt={changelog.fetchedAt} />
