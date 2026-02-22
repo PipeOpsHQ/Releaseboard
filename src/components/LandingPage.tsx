@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getPipeOpsSignInUrl } from "@/lib/pipeops-auth";
+import { isAdminAuthenticated } from "@/lib/admin-auth";
 
 import { GitMerge, Lock, Globe } from "react-feather";
 
@@ -28,8 +29,9 @@ const PROVIDERS = [
   { name: "Gitea", icon: "◎" },
 ];
 
-export function LandingPage(): JSX.Element {
+export async function LandingPage(): Promise<JSX.Element> {
   const pipeOpsSignInUrl = getPipeOpsSignInUrl("/");
+  const isAdmin = await isAdminAuthenticated();
 
   return (
     <main className="page-shell landing-shell">
@@ -69,9 +71,11 @@ export function LandingPage(): JSX.Element {
             <Link href="/changelog" className="primary-btn">
               View Changelog
             </Link>
-            <Link href="/admin" className="ghost-btn">
-              Configure Sources
-            </Link>
+            {isAdmin && (
+              <Link href="/admin" className="ghost-btn">
+                Configure Sources
+              </Link>
+            )}
           </div>
         </div>
 
@@ -131,7 +135,7 @@ export function LandingPage(): JSX.Element {
       >
         <span>© {new Date().getFullYear()} Releaseboard</span>
         <div style={{ display: "flex", gap: "1.2rem", fontWeight: 500 }}>
-          <Link href="/admin">Admin</Link>
+          {isAdmin && <Link href="/admin">Admin</Link>}
           <Link href="/changelog">Changelog</Link>
           <a href="/api/changelog" target="_blank" rel="noreferrer">
             API
