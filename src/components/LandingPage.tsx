@@ -37,7 +37,7 @@ export function LandingPage(): JSX.Element {
         <p className="landing-brand">⬢ Releaseboard</p>
         <div className="hero-actions">
           <a href={pipeOpsSignInUrl} className="ghost-btn">
-            Sign in with PipeOps
+            Deploy on PipeOps
           </a>
           <Link href="/changelog" className="primary-btn">
             Open Live Feed

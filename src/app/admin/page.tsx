@@ -43,7 +43,7 @@ export default async function AdminPage(): Promise<JSX.Element> {
 
           <div className="admin-inline-actions">
             <a href={pipeOpsSignInUrl} className="ghost-btn">
-              Sign in with PipeOps
+              Deploy on PipeOps
             </a>
 
             <Link href="/" className="ghost-btn">
