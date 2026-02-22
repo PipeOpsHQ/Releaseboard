@@ -74,6 +74,9 @@ export async function LandingPage(): Promise<JSX.Element> {
             <Link href="/changelog" className="primary-btn">
               View Changelog
             </Link>
+            <Link href="/docs" className="ghost-btn">
+              Read Documentation
+            </Link>
             {isAdmin && (
               <Link href="/admin" className="ghost-btn">
                 Configure Sources
