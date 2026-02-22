@@ -31,6 +31,9 @@ export async function ChangelogView(props?: ChangelogViewProps): Promise<JSX.Ele
         </Link>
 
         <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginLeft: "auto" }}>
+          <Link href="/docs" className="ghost-btn">
+            Docs
+          </Link>
           <Link href="/" className="ghost-btn">
             Home
           </Link>

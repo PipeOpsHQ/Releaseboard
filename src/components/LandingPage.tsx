@@ -38,6 +38,9 @@ export async function LandingPage(): Promise<JSX.Element> {
       <section className="landing-topbar" style={{ animation: "fadeIn 500ms ease both" }}>
         <p className="landing-brand">⬢ Releaseboard</p>
         <div className="hero-actions">
+          <Link href="/docs" className="ghost-btn" style={{ marginRight: "0.5rem" }}>
+            Docs
+          </Link>
           <a href={pipeOpsSignInUrl} className="ghost-btn">
             Deploy on PipeOps
           </a>
@@ -136,6 +139,7 @@ export async function LandingPage(): Promise<JSX.Element> {
         <span>© {new Date().getFullYear()} Releaseboard</span>
         <div style={{ display: "flex", gap: "1.2rem", fontWeight: 500 }}>
           {isAdmin && <Link href="/admin">Admin</Link>}
+          <Link href="/docs">Docs</Link>
           <Link href="/changelog">Changelog</Link>
           <a href="/api/changelog" target="_blank" rel="noreferrer">
             API
