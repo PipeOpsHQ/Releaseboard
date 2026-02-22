@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
-import { Lock, Server, Shield, Zap } from "react-feather";
+import { Server, Shield, Zap } from "react-feather";
 
 export default async function DocsPage(): Promise<JSX.Element> {
   const isAdmin = await isAdminAuthenticated();
@@ -65,7 +65,7 @@ export default async function DocsPage(): Promise<JSX.Element> {
               </li>
               <li style={{ display: "flex", gap: "0.5rem", alignItems: "flex-start" }}>
                 <span style={{ color: "var(--accent-red)" }}>•</span>
-                <span><strong>Direct Proxying:</strong> We fetch release data directly from your configured repositories on demand (with a short cache window) and render it server-side. The data only travels from your Git provider → your Releaseboard server → your user's browser.</span>
+                <span><strong>Direct Proxying:</strong> We fetch release data directly from your configured repositories on demand (with a short cache window) and render it server-side. The data only travels from your Git provider → your Releaseboard server → your user&apos;s browser.</span>
               </li>
             </ul>
           </div>
@@ -82,7 +82,7 @@ export default async function DocsPage(): Promise<JSX.Element> {
                 <strong>Next.js 15 (App Router):</strong> The core framework powering both the frontend and backend API capabilities. We utilize React Server Components for heavy lifting to ship virtually zero JavaScript to the client.
               </li>
               <li>
-                <strong>Better-SQLite3:</strong> A fast, synchronous SQLite driver for Node.js. Used to store your configured sources and provide a local caching layer so we don't hit rate limits on your Git providers.
+                <strong>Better-SQLite3:</strong> A fast, synchronous SQLite driver for Node.js. Used to store your configured sources and provide a local caching layer so we don&apos;t hit rate limits on your Git providers.
               </li>
               <li>
                 <strong>Vanilla CSS & CSS Variables:</strong> We bypass heavy styling libraries in favor of a lean, performant CSS architecture utilizing modern variables and native media queries for our dark-mode glassmorphism aesthetic.
@@ -101,10 +101,10 @@ export default async function DocsPage(): Promise<JSX.Element> {
           </div>
           <div className="landing-card" style={{ padding: "1.5rem", textAlign: "left", flex: "none" }}>
             <p style={{ marginBottom: "1rem" }}>
-              Releaseboard supports aggregating standardized releases and tags. But what about repositories that don't use formal releases?
+              Releaseboard supports aggregating standardized releases and tags. But what about repositories that don&apos;t use formal releases?
             </p>
             <p>
-              We built a <strong>Commit Fallback</strong> engine. If a repository has zero formal releases, the engine automatically falls back to querying the commit history of the main branch. It seamlessly infers the updates by parsing the commit messages, so your changelog always has content, regardless of the repository's CI/CD maturity.
+              We built a <strong>Commit Fallback</strong> engine. If a repository has zero formal releases, the engine automatically falls back to querying the commit history of the main branch. It seamlessly infers the updates by parsing the commit messages, so your changelog always has content, regardless of the repository&apos;s CI/CD maturity.
             </p>
           </div>
         </section>
