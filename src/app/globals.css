@@ -82,6 +82,8 @@ body {
   letter-spacing: var(--tracking-normal);
   position: relative;
   overflow-x: hidden;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
