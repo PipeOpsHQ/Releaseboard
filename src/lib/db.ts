@@ -25,6 +25,7 @@ interface SourceRow {
   token_encrypted: string | null;
   enabled: number;
   releases_limit: number;
+  sort_order: number;
   created_at: string;
   updated_at: string;
 }
@@ -191,6 +192,7 @@ db.exec(`
     token_encrypted TEXT,
     enabled INTEGER NOT NULL DEFAULT 1,
     releases_limit INTEGER NOT NULL DEFAULT 8,
+    sort_order INTEGER NOT NULL DEFAULT 0,
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL
   );
@@ -241,6 +243,7 @@ const repoSourceColumns = db.prepare("PRAGMA table_info(repo_sources)").all() as
 const hasProviderColumn = repoSourceColumns.some((column) => column.name === "provider");
 const hasBaseUrlColumn = repoSourceColumns.some((column) => column.name === "base_url");
 const hasPageIdColumn = repoSourceColumns.some((column) => column.name === "page_id");
+const hasSortOrderColumn = repoSourceColumns.some((column) => column.name === "sort_order");
 
 if (!hasProviderColumn) {
   db.exec("ALTER TABLE repo_sources ADD COLUMN provider TEXT NOT NULL DEFAULT 'github'");
@@ -254,7 +257,14 @@ if (!hasPageIdColumn) {
   db.exec(`ALTER TABLE repo_sources ADD COLUMN page_id TEXT NOT NULL DEFAULT '${DEFAULT_CHANGELOG_PAGE_ID}'`);
 }
 
+if (!hasSortOrderColumn) {
+  db.exec("ALTER TABLE repo_sources ADD COLUMN sort_order INTEGER NOT NULL DEFAULT 0");
+  // Optional: seed initial sort_order values so they aren't all 0,
+  // but it works fine if they are all 0 initially (they will sort by display name)
+}
+
 db.exec("CREATE INDEX IF NOT EXISTS idx_repo_sources_page_id ON repo_sources(page_id)");
+db.exec("CREATE INDEX IF NOT EXISTS idx_repo_sources_sort_order ON repo_sources(page_id, sort_order);");
 
 db.prepare(
   `
@@ -318,6 +328,7 @@ function mapRow(row: SourceRow): RepoSource {
     hasToken: Boolean(decryptToken(row.token_encrypted)),
     enabled: row.enabled === 1,
     releasesLimit: row.releases_limit,
+    sortOrder: row.sort_order,
     createdAt: row.created_at,
     updatedAt: row.updated_at
   };
@@ -447,15 +458,15 @@ export function listRepoSources(pageId?: string): RepoSource[] {
   const normalizedPageId = pageId?.trim();
 
   const rows = normalizedPageId
-    ? (db.prepare("SELECT * FROM repo_sources WHERE page_id = ? ORDER BY display_name ASC").all(normalizedPageId) as SourceRow[])
-    : (db.prepare("SELECT * FROM repo_sources ORDER BY display_name ASC").all() as SourceRow[]);
+    ? (db.prepare("SELECT * FROM repo_sources WHERE page_id = ? ORDER BY sort_order ASC, display_name ASC").all(normalizedPageId) as SourceRow[])
+    : (db.prepare("SELECT * FROM repo_sources ORDER BY page_id ASC, sort_order ASC, display_name ASC").all() as SourceRow[]);
 
   return rows.map(mapRow);
 }
 
 export function listEnabledRepoSourcesWithTokens(pageId = DEFAULT_CHANGELOG_PAGE_ID): RepoSourceWithToken[] {
   const rows = db
-    .prepare("SELECT * FROM repo_sources WHERE enabled = 1 AND page_id = ? ORDER BY display_name ASC")
+    .prepare("SELECT * FROM repo_sources WHERE enabled = 1 AND page_id = ? ORDER BY sort_order ASC, display_name ASC")
     .all(pageId) as SourceRow[];
 
   return rows.map(mapRowWithToken);
@@ -481,6 +492,7 @@ export function createRepoSource(input: SourceCreateInput): RepoSource {
         token_encrypted,
         enabled,
         releases_limit,
+        sort_order,
         created_at,
         updated_at
       ) VALUES (
@@ -495,6 +507,7 @@ export function createRepoSource(input: SourceCreateInput): RepoSource {
         @token_encrypted,
         @enabled,
         @releases_limit,
+        (SELECT COALESCE(MAX(sort_order), -1) + 1 FROM repo_sources WHERE page_id = @page_id),
         @created_at,
         @updated_at
       )
@@ -569,6 +582,53 @@ export function updateRepoSource(input: SourceUpdateInput): RepoSource {
 
 export function deleteRepoSource(id: string): void {
   db.prepare("DELETE FROM repo_sources WHERE id = ?").run(id);
+}
+
+export function swapRepoSourceOrder(sourceId: string, direction: "up" | "down"): void {
+  // Use a transaction to ensure atomic swap
+  const swap = db.transaction(() => {
+    const current = db.prepare("SELECT id, page_id, sort_order FROM repo_sources WHERE id = ?").get(sourceId) as {
+      id: string;
+      page_id: string;
+      sort_order: number;
+    } | undefined;
+
+    if (!current) return; // Source not found
+
+    // Find the adjacent row to swap with
+    let adjacent: { id: string; sort_order: number } | undefined;
+
+    if (direction === "up") {
+      // Find the row immediately preceding us in the same page
+      adjacent = db
+        .prepare("SELECT id, sort_order FROM repo_sources WHERE page_id = ? AND sort_order < ? ORDER BY sort_order DESC LIMIT 1")
+        .get(current.page_id, current.sort_order) as { id: string; sort_order: number } | undefined;
+    } else {
+      // Find the row immediately following us in the same page
+      adjacent = db
+        .prepare("SELECT id, sort_order FROM repo_sources WHERE page_id = ? AND sort_order > ? ORDER BY sort_order ASC LIMIT 1")
+        .get(current.page_id, current.sort_order) as { id: string; sort_order: number } | undefined;
+    }
+
+    if (!adjacent) return; // Already at the top/bottom
+
+    const nowIso = new Date().toISOString();
+
+    // Perform the swap
+    db.prepare("UPDATE repo_sources SET sort_order = ?, updated_at = ? WHERE id = ?").run(
+      adjacent.sort_order,
+      nowIso,
+      current.id
+    );
+
+    db.prepare("UPDATE repo_sources SET sort_order = ?, updated_at = ? WHERE id = ?").run(
+      current.sort_order,
+      nowIso,
+      adjacent.id
+    );
+  });
+
+  swap();
 }
 
 export function getAppSettings(): AppSettings {

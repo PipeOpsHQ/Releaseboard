@@ -9,6 +9,7 @@ interface ReleaseFeedProps {
   releases: AggregatedRelease[];
   errors: SourceFetchError[];
   fetchedAt: string;
+  sourceNames?: string[];
 }
 
 interface MonthBucket {
@@ -49,15 +50,20 @@ function providerLabel(provider: AggregatedRelease["provider"]): string {
   return "GitHub";
 }
 
-export function ReleaseFeed({ releases, errors, fetchedAt }: ReleaseFeedProps): JSX.Element {
+export function ReleaseFeed({ releases, errors, fetchedAt, sourceNames }: ReleaseFeedProps): JSX.Element {
   const services = useMemo(() => {
+    if (sourceNames && sourceNames.length > 0) {
+      const active = new Set(releases.map((r) => r.sourceName));
+      return sourceNames.filter(name => active.has(name));
+    }
     return Array.from(new Set(releases.map((r) => r.sourceName))).sort((a, b) => a.localeCompare(b));
-  }, [releases]);
+  }, [releases, sourceNames]);
 
   const [selectedService, setSelectedService] = useState<string>("all");
   const [query, setQuery] = useState<string>("");
   const [selectedRelease, setSelectedRelease] = useState<AggregatedRelease | null>(null);
   const [activeReleaseId, setActiveReleaseId] = useState<string | null>(null);
+  const [dismissedErrors, setDismissedErrors] = useState(false);
 
   const filtered = useMemo(() => {
     const lq = query.trim().toLowerCase();
@@ -154,10 +160,21 @@ export function ReleaseFeed({ releases, errors, fetchedAt }: ReleaseFeedProps): 
         </div>
       </div>
 
-      {errors.length > 0 ? (
-        <div className="error-panel" role="status" aria-live="polite">
-          <div>
-            <h3>⚠ Some sources failed to sync</h3>
+      {!dismissedErrors && errors.length > 0 ? (
+        <div className="error-panel" role="status" aria-live="polite" style={{ position: "relative" }}>
+          <button
+            type="button"
+            className="mini-btn icon-btn"
+            aria-label="Dismiss errors"
+            onClick={() => setDismissedErrors(true)}
+            style={{ position: "absolute", top: "0.5rem", right: "0.5rem" }}
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true" width={16} height={16} style={{ stroke: "currentColor", strokeWidth: 2, fill: "none" }}>
+              <path d="M6 6L18 18M18 6L6 18" />
+            </svg>
+          </button>
+          <div style={{ paddingRight: "2rem" }}>
+            <h3 style={{ marginTop: 0 }}>⚠ Some sources failed to sync</h3>
             <ul>
               {errors.map((err) => (
                 <li key={`${err.sourceId}:${err.message}`}>

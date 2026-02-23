@@ -9,6 +9,7 @@ import {
   deleteRepoSource,
   listChangelogPages,
   setRootPageMode,
+  swapRepoSourceOrder,
   updateChangelogPage,
   updateRepoSource
 } from "@/lib/db";
@@ -158,6 +159,48 @@ export async function deleteSourceAction(formData: FormData): Promise<void> {
 
   deleteRepoSource(id);
   invalidateChangelogCache();
+  revalidatePath("/");
+  revalidatePath("/admin");
+  revalidatePath("/changelog");
+
+  const pages = listChangelogPages();
+  for (const page of pages) {
+    revalidatePath(`/${page.pathName}`);
+  }
+}
+
+export async function moveSourceUpAction(formData: FormData): Promise<void> {
+  await requireAdminOrThrow();
+
+  const id = String(formData.get("id") ?? "").trim();
+  if (!id) {
+    throw new Error("Missing source id");
+  }
+
+  swapRepoSourceOrder(id, "up");
+  invalidateChangelogCache();
+
+  revalidatePath("/");
+  revalidatePath("/admin");
+  revalidatePath("/changelog");
+
+  const pages = listChangelogPages();
+  for (const page of pages) {
+    revalidatePath(`/${page.pathName}`);
+  }
+}
+
+export async function moveSourceDownAction(formData: FormData): Promise<void> {
+  await requireAdminOrThrow();
+
+  const id = String(formData.get("id") ?? "").trim();
+  if (!id) {
+    throw new Error("Missing source id");
+  }
+
+  swapRepoSourceOrder(id, "down");
+  invalidateChangelogCache();
+
   revalidatePath("/");
   revalidatePath("/admin");
   revalidatePath("/changelog");

@@ -13,7 +13,9 @@ import {
   refreshAction,
   updateChangelogPageAction,
   updateRootPageAction,
-  updateSourceAction
+  updateSourceAction,
+  moveSourceUpAction,
+  moveSourceDownAction
 } from "@/app/admin/actions";
 
 export default async function AdminPage(): Promise<JSX.Element> {
@@ -318,8 +320,10 @@ export default async function AdminPage(): Promise<JSX.Element> {
               {sources.length === 0 ? (
                 <div className="empty-state">No source connected yet.</div>
               ) : (
-                sources.map((source) => {
+                sources.map((source, index) => {
                   const sourcePage = pages.find((page) => page.id === source.pageId);
+                  const isFirstInPage = sources[index - 1]?.pageId !== source.pageId;
+                  const isLastInPage = sources[index + 1]?.pageId !== source.pageId;
 
                   return (
                     <article className="admin-card admin-source-card" key={source.id}>
@@ -336,6 +340,33 @@ export default async function AdminPage(): Promise<JSX.Element> {
                           <span>{source.isPrivate ? "private" : "public"}</span>
                           <span>{source.enabled ? "enabled" : "disabled"}</span>
                           <span>{sourcePage ? `/${sourcePage.pathName}` : "unassigned"}</span>
+                        </div>
+
+                        <div className="admin-inline-actions" style={{ marginLeft: "auto" }}>
+                          <form action={moveSourceUpAction} className="inline-form">
+                            <input type="hidden" name="id" value={source.id} />
+                            <button
+                              type="submit"
+                              className="mini-btn icon-btn"
+                              disabled={isFirstInPage}
+                              aria-label="Move source up"
+                              title="Move UP"
+                            >
+                              ↑
+                            </button>
+                          </form>
+                          <form action={moveSourceDownAction} className="inline-form">
+                            <input type="hidden" name="id" value={source.id} />
+                            <button
+                              type="submit"
+                              className="mini-btn icon-btn"
+                              disabled={isLastInPage}
+                              aria-label="Move source down"
+                              title="Move DOWN"
+                            >
+                              ↓
+                            </button>
+                          </form>
                         </div>
                       </div>
 

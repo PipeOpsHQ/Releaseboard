@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { DEFAULT_CHANGELOG_PATH_NAME, listChangelogPages } from "@/lib/db";
+import { DEFAULT_CHANGELOG_PATH_NAME, listChangelogPages, listEnabledRepoSourcesWithTokens } from "@/lib/db";
 import { getUnifiedChangelog } from "@/lib/changelog";
 import { ReleaseFeed } from "@/components/ReleaseFeed";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
@@ -15,6 +15,8 @@ export async function ChangelogView(props?: ChangelogViewProps): Promise<JSX.Ele
   const pagePathName = props?.pagePathName ?? DEFAULT_CHANGELOG_PATH_NAME;
   const pageName = props?.pageName ?? "Changelog";
   const changelog = await getUnifiedChangelog({ pageId });
+  const sources = listEnabledRepoSourcesWithTokens(pageId);
+  const sourceNames = Array.from(new Set(sources.map((s) => s.displayName)));
   const pages = listChangelogPages();
   const apiHref = `/api/changelog?path=${encodeURIComponent(pagePathName)}`;
   const isAdmin = await isAdminAuthenticated();
@@ -69,7 +71,12 @@ export async function ChangelogView(props?: ChangelogViewProps): Promise<JSX.Ele
         <span>/{pagePathName}</span>
       </div>
 
-      <ReleaseFeed releases={changelog.releases} errors={changelog.errors} fetchedAt={changelog.fetchedAt} />
+      <ReleaseFeed
+        releases={changelog.releases}
+        errors={changelog.errors}
+        fetchedAt={changelog.fetchedAt}
+        sourceNames={sourceNames}
+      />
     </main>
   );
 }

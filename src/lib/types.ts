@@ -12,6 +12,7 @@ export interface RepoSource {
   hasToken: boolean;
   enabled: boolean;
   releasesLimit: number;
+  sortOrder: number;
   createdAt: string;
   updatedAt: string;
 }
