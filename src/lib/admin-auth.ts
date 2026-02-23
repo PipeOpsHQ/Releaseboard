@@ -22,11 +22,14 @@ export function isAdminPasswordConfigured(): boolean {
 }
 
 export async function isAdminAuthenticated(): Promise<boolean> {
+  // Call cookies() unconditionally first to opt the route into dynamic rendering
+  // so that process.env.ADMIN_PASSWORD is read at runtime, not statically at build time.
+  const store = await cookies();
+
   if (!isAdminPasswordConfigured()) {
     return true;
   }
 
-  const store = await cookies();
   const session = store.get(ADMIN_COOKIE)?.value;
   if (!session) {
     return false;
