@@ -1,4 +1,5 @@
 import type { AggregatedRelease, GitProvider, RepoSourceWithToken } from "@/lib/types";
+import { fetchWithRetry } from "@/lib/fetch-utils";
 
 interface GitHubRelease {
   id: number;
@@ -372,7 +373,7 @@ async function fetchGitHubCommitFallback(
 
   let response: Response;
   try {
-    response = await fetch(url.toString(), {
+    response = await fetchWithRetry(url.toString(), {
       headers: createHeaders(source),
       next: { revalidate: 300 }
     });
@@ -403,7 +404,7 @@ async function fetchGitLabCommitFallback(
 
   let response: Response;
   try {
-    response = await fetch(url.toString(), {
+    response = await fetchWithRetry(url.toString(), {
       headers: createHeaders(source),
       next: { revalidate: 300 }
     });
@@ -441,7 +442,7 @@ async function fetchBitbucketCommitFallback(
 
   let response: Response;
   try {
-    response = await fetch(url.toString(), {
+    response = await fetchWithRetry(url.toString(), {
       headers: createHeaders(source),
       next: { revalidate: 300 }
     });
@@ -482,7 +483,7 @@ async function fetchGitHubSource(
 
   let response: Response;
   try {
-    response = await fetch(url.toString(), {
+    response = await fetchWithRetry(url.toString(), {
       headers: createHeaders(source),
       next: { revalidate: 300 }
     });
@@ -494,6 +495,12 @@ async function fetchGitHubSource(
   if (!response.ok) {
     const detail = await response.text();
     const releaseError = formatApiError(source.provider, response.status, detail);
+
+    // Stop early if hit a Github Rate limit so we don't spam the commit API additionally
+    if (response.status === 403 && detail.includes("rate limit")) {
+      return { releases: [], error: releaseError };
+    }
+
     const commitFallback = await fetchGitHubCommitFallback(source);
 
     if (commitFallback.releases.length > 0) {
@@ -551,7 +558,7 @@ async function fetchGitLabSource(
 
   let response: Response;
   try {
-    response = await fetch(url.toString(), {
+    response = await fetchWithRetry(url.toString(), {
       headers: createHeaders(source),
       next: { revalidate: 300 }
     });
@@ -563,6 +570,12 @@ async function fetchGitLabSource(
   if (!response.ok) {
     const detail = await response.text();
     const releaseError = formatApiError(source.provider, response.status, detail);
+
+    // Stop early if hit a Gitlab Rate limit
+    if (response.status === 429) {
+      return { releases: [], error: releaseError };
+    }
+
     const commitFallback = await fetchGitLabCommitFallback(source);
 
     if (commitFallback.releases.length > 0) {
@@ -619,7 +632,7 @@ async function fetchGiteaSource(
 
   let response: Response;
   try {
-    response = await fetch(url.toString(), {
+    response = await fetchWithRetry(url.toString(), {
       headers: createHeaders(source),
       next: { revalidate: 300 }
     });
@@ -634,7 +647,7 @@ async function fetchGiteaSource(
 
     let commitResponse: Response;
     try {
-      commitResponse = await fetch(commitUrl.toString(), {
+      commitResponse = await fetchWithRetry(commitUrl.toString(), {
         headers: createHeaders(source),
         next: { revalidate: 300 }
       });
@@ -665,6 +678,12 @@ async function fetchGiteaSource(
   if (!response.ok) {
     const detail = await response.text();
     const releaseError = formatApiError(source.provider, response.status, detail);
+
+    // Stop early if hit a Gitea Rate limit
+    if (response.status === 429) {
+      return { releases: [], error: releaseError };
+    }
+
     const commitFallback = await fetchGiteaCommitFallback();
     if (commitFallback.releases.length > 0) {
       return { releases: commitFallback.releases, error: null };
