@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { getPipeOpsSignInUrl } from "@/lib/pipeops-auth";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
 
 import { GitMerge, Lock, Globe } from "react-feather";
@@ -30,7 +29,6 @@ const PROVIDERS = [
 ];
 
 export async function LandingPage(): Promise<JSX.Element> {
-  const pipeOpsSignInUrl = getPipeOpsSignInUrl("/");
   const isAdmin = await isAdminAuthenticated();
 
   return (
@@ -38,10 +36,13 @@ export async function LandingPage(): Promise<JSX.Element> {
       <section className="landing-topbar" style={{ animation: "fadeIn 500ms ease both" }}>
         <p className="landing-brand">⬢ Releaseboard</p>
         <div className="hero-actions">
+          <a href="https://github.com/PipeOpsHQ/releaseboard" target="_blank" rel="noreferrer" className="ghost-btn" style={{ marginRight: "0.5rem" }}>
+            GitHub
+          </a>
           <Link href="/docs" className="ghost-btn" style={{ marginRight: "0.5rem" }}>
             Docs
           </Link>
-          <a href={pipeOpsSignInUrl} className="ghost-btn">
+          <a href="https://www.pipeops.io/addons/c7b3fa6c-a9a3-4974-95d2-2ba39a1777b1/details" target="_blank" rel="noreferrer" className="ghost-btn">
             Deploy on PipeOps
           </a>
           <Link href="/changelog" className="primary-btn">
@@ -77,6 +78,9 @@ export async function LandingPage(): Promise<JSX.Element> {
             <Link href="/docs" className="ghost-btn">
               Read Documentation
             </Link>
+            <a href="https://github.com/PipeOpsHQ/releaseboard" target="_blank" rel="noreferrer" className="ghost-btn">
+              GitHub
+            </a>
             {isAdmin && (
               <Link href="/admin" className="ghost-btn">
                 Configure Sources

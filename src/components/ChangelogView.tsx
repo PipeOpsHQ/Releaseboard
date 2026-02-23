@@ -34,6 +34,9 @@ export async function ChangelogView(props?: ChangelogViewProps): Promise<JSX.Ele
         </Link>
 
         <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginLeft: "auto" }}>
+          <a href="https://github.com/PipeOpsHQ/releaseboard" target="_blank" rel="noreferrer" className="ghost-btn">
+            GitHub
+          </a>
           <Link href="/docs" className="ghost-btn">
             Docs
           </Link>
