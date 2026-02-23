@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { format } from "date-fns";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import clsx from "clsx";
 import type { AggregatedRelease, SourceFetchError } from "@/lib/types";
 
@@ -59,7 +60,26 @@ export function ReleaseFeed({ releases, errors, fetchedAt, sourceNames }: Releas
     return Array.from(new Set(releases.map((r) => r.sourceName))).sort((a, b) => a.localeCompare(b));
   }, [releases, sourceNames]);
 
-  const [selectedService, setSelectedService] = useState<string>("all");
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  const serviceFromUrl = searchParams.get("service") ?? "all";
+
+  // Keep local state in sync or just map directly to the URL.
+  // Mapping directly to the URL is cleaner.
+  const selectedService = services.includes(serviceFromUrl) ? serviceFromUrl : "all";
+
+  const setServiceFilter = (serviceName: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (serviceName === "all") {
+      params.delete("service");
+    } else {
+      params.set("service", serviceName);
+    }
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  };
+
   const [query, setQuery] = useState<string>("");
   const [selectedRelease, setSelectedRelease] = useState<AggregatedRelease | null>(null);
   const [activeReleaseId, setActiveReleaseId] = useState<string | null>(null);
@@ -143,7 +163,7 @@ export function ReleaseFeed({ releases, errors, fetchedAt, sourceNames }: Releas
           <button
             type="button"
             className={clsx("pill", selectedService === "all" && "active")}
-            onClick={() => setSelectedService("all")}
+            onClick={() => setServiceFilter("all")}
           >
             All Services
           </button>
@@ -152,7 +172,7 @@ export function ReleaseFeed({ releases, errors, fetchedAt, sourceNames }: Releas
               key={s}
               type="button"
               className={clsx("pill", selectedService === s && "active")}
-              onClick={() => setSelectedService(s)}
+              onClick={() => setServiceFilter(s)}
             >
               {s}
             </button>

@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { DEFAULT_CHANGELOG_PATH_NAME, listChangelogPages, listEnabledRepoSourcesWithTokens } from "@/lib/db";
 import { getUnifiedChangelog } from "@/lib/changelog";
@@ -71,12 +72,14 @@ export async function ChangelogView(props?: ChangelogViewProps): Promise<JSX.Ele
         <span>/{pagePathName}</span>
       </div>
 
-      <ReleaseFeed
-        releases={changelog.releases}
-        errors={changelog.errors}
-        fetchedAt={changelog.fetchedAt}
-        sourceNames={sourceNames}
-      />
+      <Suspense fallback={<div className="empty-state">Loading releases...</div>}>
+        <ReleaseFeed
+          releases={changelog.releases}
+          errors={changelog.errors}
+          fetchedAt={changelog.fetchedAt}
+          sourceNames={sourceNames}
+        />
+      </Suspense>
     </main>
   );
 }
