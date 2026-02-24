@@ -1659,6 +1659,8 @@ samp {
     flex-direction: row;
     overflow-x: auto;
     max-height: none;
+    max-width: 100%;
+    box-sizing: border-box;
     padding: 0.8rem;
     gap: 1rem;
     border: 1px solid rgba(255, 255, 255, 0.1);
