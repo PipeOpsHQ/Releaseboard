@@ -63,4 +63,3 @@ curl http://localhost:3000/api/changelog?force=1
 curl -H "x-api-key: $CHANGELOG_API_KEY" http://localhost:3000/api/changelog
 curl -H "Authorization: Bearer $CHANGELOG_API_KEY" http://localhost:3000/api/changelog?force=1
 ```
-# Releaseboard
