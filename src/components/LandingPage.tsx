@@ -75,15 +75,13 @@ export async function LandingPage(): Promise<JSX.Element> {
             <Link href="/changelog" className="primary-btn">
               View Changelog
             </Link>
-            <Link href="/docs" className="ghost-btn">
-              Read Documentation
-            </Link>
-            <a href="https://github.com/PipeOpsHQ/releaseboard" target="_blank" rel="noreferrer" className="ghost-btn">
-              GitHub
-            </a>
-            {isAdmin && (
+            {isAdmin ? (
               <Link href="/admin" className="ghost-btn">
                 Configure Sources
+              </Link>
+            ) : (
+              <Link href="/docs" className="ghost-btn">
+                Read Documentation
               </Link>
             )}
           </div>
